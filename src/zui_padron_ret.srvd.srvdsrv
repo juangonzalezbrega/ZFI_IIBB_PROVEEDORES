@@ -1,0 +1,6 @@
+@EndUserText.label: 'Servicio OData - Padron Retenciones'
+define service ZUI_PADRON_RET {
+  expose ZC_ARBA_RET_EJECUCION as Ejecuciones;
+  expose ZC_ARBA_RET_EJEC_LOG  as LogEjecucion;
+  expose ZI_ARBA_RET_EJEC_ERR  as Errores;
+}

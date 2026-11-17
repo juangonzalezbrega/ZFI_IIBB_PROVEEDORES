@@ -1,0 +1,56 @@
+@Metadata.layer: #CUSTOMER
+@UI: {
+  headerInfo: {
+    typeName: 'Tucuman - Equivalencia alicuota / codigo', 
+    typeNamePlural: 'Tucuman - Equivalencia alicuota / codigo', 
+    title: {
+      type: #STANDARD, 
+      value: 'Witht'
+    }
+  }
+}
+annotate view ZI_TucEquivalencia with
+{
+  @UI.identification: [ {
+    position: 1 
+  } ]
+  @UI.lineItem: [ {
+    position: 1 
+  } ]
+  @UI.facet: [ {
+    id: 'TucEquivalencia', 
+    purpose: #STANDARD, 
+    type: #IDENTIFICATION_REFERENCE, 
+    label: 'Tucuman - Equivalencia alicuota / codigo', 
+    position: 1 
+  } ]
+  Witht;
+  
+  @UI.identification: [ {
+    position: 2 
+  } ]
+  @UI.lineItem: [ {
+    position: 2 
+  } ]
+  WtWithcd;
+  
+  @UI.identification: [ {
+    position: 3 , 
+    label: 'ConvMult'
+  } ]
+  @UI.lineItem: [ {
+    position: 3 , 
+    label: 'ConvMult'
+  } ]
+  ConvMult;
+  
+  @UI.identification: [ {
+    position: 4 , 
+    label: 'WtQsatz'
+  } ]
+  @UI.lineItem: [ {
+    position: 4 , 
+    label: 'WtQsatz'
+  } ]
+  WtQsatz;
+}

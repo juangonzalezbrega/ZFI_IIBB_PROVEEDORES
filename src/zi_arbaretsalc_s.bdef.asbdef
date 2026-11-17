@@ -1,0 +1,102 @@
+managed with additional save implementation in class ZBP_I_ARBA_RET_SALC_S unique;
+strict ( 1 );
+with draft;
+define behavior for ZI_ARBARETSALC_S alias SaltaCondicionAll
+draft table ZARBA_RET_SLC_DS
+with unmanaged save
+lock master total etag LastChangedAtMax
+authorization master( global )
+{
+  field ( readonly )
+   SingletonID;
+
+  field ( features : instance )
+   TransportRequestID;
+
+  field ( notrigger )
+   SingletonID,
+   LastChangedAtMax;
+
+
+  update;
+  internal create;
+  internal delete;
+
+  draft action ( features : instance ) Edit with additional implementation;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare {
+    validation SaltaCondicion ~ ValidateDataConsistency;
+  }
+  action ( features : instance ) SelectCustomizingTransptReq parameter D_SelectCustomizingTransptReqP result [1] $self;
+
+  association _SaltaCondicion { create ( features : instance ); with draft; }
+
+  validation ValidateTransportRequest on save ##NOT_ASSIGNED_TO_DETACT
+  {
+    create;
+    update;
+  }
+
+  side effects
+  {
+    action SelectCustomizingTransptReq affects
+        $self;
+  }
+
+}
+
+define behavior for ZI_ArbaRetSalc alias SaltaCondicion ##UNMAPPED_FIELD[SingletonID]
+persistent table ZARBA_RET_SALC
+draft table ZARBA_RET_SALC_D
+etag master LocalLastChangedAt
+lock dependent by _SaltaCondicionAll
+authorization dependent by _SaltaCondicionAll
+{
+  field ( mandatory : create )
+   Witht,
+   Condicion;
+
+  field ( readonly )
+   SingletonID,
+   LocalLastChangedAt,
+   LastChangedAt;
+
+  field ( readonly : update )
+   Witht,
+   Condicion;
+
+  field ( notrigger )
+   SingletonID,
+   LocalLastChangedAt,
+   LastChangedAt;
+
+
+  update( features : global );
+  delete( features : global );
+
+  mapping for ZARBA_RET_SALC
+  {
+    Witht = WITHT;
+    Condicion = CONDICION;
+    WtWithcd = WT_WITHCD;
+    LocalLastChangedAt = LOCAL_LAST_CHANGED_AT;
+    LastChangedAt = LAST_CHANGED_AT;
+  }
+
+  association _SaltaCondicionAll { with draft; }
+
+  validation ValidateTransportRequest on save ##NOT_ASSIGNED_TO_DETACT
+  {
+    create;
+    update;
+    delete;
+  }
+  validation ValidateDataConsistency on save
+  {
+    create;
+    update;
+  }
+
+}

@@ -1,0 +1,47 @@
+@Metadata.layer: #CUSTOMER
+@UI: {
+  headerInfo: {
+    typeName: 'Padrón Salta - Condición',
+    typeNamePlural: 'Padrón Salta - Condición',
+    title: {
+      type: #STANDARD,
+      value: 'Witht'
+    }
+  }
+}
+annotate view ZI_ArbaRetSalc with
+{
+  @EndUserText.label: 'Tipo de retención' // #33750 nuevo
+  @UI.identification: [ {
+    position: 1
+  } ]
+  @UI.lineItem: [ {
+    position: 1
+  } ]
+  @UI.facet: [ {
+    id: 'SaltaCondicion',
+    purpose: #STANDARD,
+    type: #IDENTIFICATION_REFERENCE,
+    label: 'Padrón Salta - Condición',
+    position: 1
+  } ]
+  Witht;
+
+  @EndUserText.label: 'Condición' // #33750 nuevo
+  @UI.identification: [ {
+    position: 2
+  } ]
+  @UI.lineItem: [ {
+    position: 2
+  } ]
+  Condicion;
+
+  @EndUserText.label: 'Indicador de retención' // #33750 nuevo
+  @UI.identification: [ {
+    position: 3
+  } ]
+  @UI.lineItem: [ {
+    position: 3
+  } ]
+  WtWithcd;
+}

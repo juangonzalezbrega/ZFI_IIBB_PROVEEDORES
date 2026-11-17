@@ -1,0 +1,23 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "Procesamiento padron ARBA Retenciones",
+    "originalLanguage": "es",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "catalogName": "ZARBA_RET_JCE"
+  },
+  "parameters": {
+    "singleValueParameters": [
+      {
+        "name": "ID_EJEC",
+        "value": ""
+      },
+      {
+        "name": "SIMULAR",
+        "value": ""
+      }
+    ]
+  }
+}

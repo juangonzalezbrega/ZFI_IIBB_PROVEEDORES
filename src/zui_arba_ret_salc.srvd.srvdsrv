@@ -1,0 +1,5 @@
+@ObjectModel.leadingEntity.name: 'ZI_ArbaRetSalc_S'
+define service ZUI_ARBA_RET_SALC {
+  expose ZI_ARBARETSALC_S as SaltaCondicionAll;
+  expose ZI_ARBARETSALC as SaltaCondicion;
+}

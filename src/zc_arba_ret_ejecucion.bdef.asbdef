@@ -1,0 +1,33 @@
+projection;
+strict ( 2 );
+use draft;
+use side effects;
+
+define behavior for ZC_ARBA_RET_EJECUCION alias Ejecucion
+{
+  use create;
+  use update;
+  use delete;
+
+  use action Simular;
+  use action Ejecutar;
+  use action ExportarCambios;
+  use action AplicarExenciones;
+
+  // Acciones de draft (obligatorias de exponer en strict + use draft)
+  use action Edit;
+  use action Activate;
+  use action Discard;
+  use action Resume;
+  use action Prepare;
+
+  use association _Log { create; with draft; }
+}
+
+define behavior for ZC_ARBA_RET_EJEC_LOG alias Log
+{
+  use update;
+  use delete;
+
+  use association _Ejecucion;
+}

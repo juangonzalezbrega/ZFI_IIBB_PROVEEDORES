@@ -1,0 +1,224 @@
+managed with additional save implementation in class zbp_i_arba_ret_ejecucion unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZI_ARBA_RET_EJECUCION alias Ejecucion
+persistent table zarba_ret_ejec
+draft table zarba_ret_ejec_d
+lock master total etag LastChangedAt
+authorization master ( global )
+etag master LocalLastChangedAt
+{
+  create;
+  update;
+  delete;
+
+  field ( numbering : managed, readonly ) EjecucionUUID;
+
+  // NombreArchivo / MimeType NO van readonly: los escribe el stream al subir.
+  // Tamanio es un campo normal calculado por la accion (no editable).
+  field ( readonly ) TamanioArchivo,
+  // Datos calculados por el proceso: solo lectura desde la UI
+  // ModoSimulacion: lo escribe el job (ultima corrida = simulacion o real); las acciones Simular /
+  // Ejecutar no lo leen. Editable desalineaba la BAdI y el control de Exportar Cambios.
+                     ModoSimulacion,
+                     IdEjecucion,
+                     Usuario,
+                     FechaHora,
+                     EstadoEjecucion,
+                     TotalLeidos,
+                     TotalActualizados,
+                     TotalSinCambios,
+                     TotalNoEncontrados,
+                     TotalRechazados,
+                     TotalErrorTecnico,
+                     TotalPendienteConfig,
+                     TotalOmitidos,
+                     AlicuotasPend,
+                     JobPartidas,
+                     ExportContent,
+                     ExportMime,
+                     ExportFilename,
+                     ProvinciaAplicada,
+                     HideTuc,
+                     HideCmCoef0,
+                     TipoIndFuera,
+                     HideSal,
+  // Solapa "Errores": calculados desde el log (no se mapean a la tabla)
+                     CantErrores,
+                     ErroresCriticality,
+                     ErroresEstado,
+                     LastChangedAt,
+                     LocalLastChangedAt;
+
+  // Tucuman: parametros editables segun el Modo (EF 6; Redmine 33748). Con Modo C (Coeficientes) se grisan
+  // Solo Padron y los de Acreditan / fuera de padron; con Modo A se grisa "Indicador CM Coef. 0".
+  // Otras provincias: editables. Lo resuelve get_instance_features.
+  field ( features : instance ) ActualizarSoloPadron,
+                                IndicadorFueraPadron,
+                                TipoRetFueraPadron,
+                                IndicadorExentoCM,
+                                IndicadorCmCoef0,
+                                SoloConRetencion;
+
+  association _Log { create; with draft; }
+
+  // Acciones de negocio (EF secciones 8 y 9)
+  action Simular  result [1] $self;
+  action Ejecutar result [1] $self;
+
+  // Exporta el padron de CAMBIOS (registros con estado 'ACT') como .txt dentro de .zip descargable.
+  action ExportarCambios result [1] $self;
+
+  // Tucuman: aplica por API (A_SupplierWithHoldingTax) lo que la app estandar NO hace: destilde de
+  // sujeto (Excluido) y exencion (coef < 1). Se corre DESPUES de "Actualizar Codigos y Partidas".
+  action AplicarExenciones result [1] $self;
+
+  determination setDefaults on modify { create; }
+  // Sin default de provincia/indicador (pedido funcional): al CAMBIAR la provincia se limpia el indicador.
+  determination setIndicadorFuera on modify { field Provincia; }
+  // Mantiene HideTuc (control de visibilidad de los parametros de Tucuman) segun la provincia.
+  determination setHideTuc on modify { create; field Provincia; }
+  // Salta: mantiene HideSal y limpia el Indicador Fuera de Padron No Salta si la provincia deja de ser SAL.
+  determination setHideSal on modify { create; field Provincia; }
+  // Mantiene TipoIndFuera: tipo por el que filtra el matchcode de "Indicador Fuera de Padron".
+  determination setTipoIndFuera on modify { create; field Provincia; field TipoRetencion; field TipoRetFueraPadron; }
+  // Tucuman (Redmine 33748, 07/10): al cambiar el Modo se limpian los parametros que quedan grisados.
+  determination limpiarPorModo on modify { field ModoArchivo; }
+  // Tucuman: al cambiar el Tipo Ret. Fuera de Padron se limpia el indicador si no es de ese tipo.
+  determination limpiarIndFuera on modify { field TipoRetFueraPadron; }
+
+  // Acciones de draft (edicion transaccional en Fiori Elements)
+  draft action Resume;
+  draft action Edit;
+  draft action Activate;
+  draft action Discard;
+  draft determine action Prepare { validation validarParametros; validation validarParametrosTuc; }
+
+  // Provincia / Sociedad / Tipo obligatorios; Indicador Fuera de Padron obligatorio (sin "Solo Padron") y del
+  // tipo de retencion (fuera de Tucuman). Las acciones Simular/Ejecutar repiten el chequeo (ejecuciones viejas).
+  validation validarParametros on save { create; field Provincia, Sociedad, TipoRetencion,
+                                         IndicadorFueraPadron, IndicadorFueraPadronNoSal, ActualizarSoloPadron; }
+  // Tucuman (Redmine 33748): Tipo de Retencion del padron de Tucuman; con Modo A sin Solo Padron, Tipo e
+  // Indicador Fuera de Padron obligatorios y el indicador del tipo fuera de padron.
+  validation validarParametrosTuc on save { create; field Provincia, TipoRetencion, ModoArchivo, ActualizarSoloPadron,
+                                            TipoRetFueraPadron, IndicadorFueraPadron; }
+
+  // Side effects: tras Simular/Ejecutar, refrescar el log hijo, la solapa Errores (14/10) y los KPIs en la UI
+  side effects
+  {
+    action Simular  affects entity _Log, entity _Errores, field EstadoEjecucion, field TotalLeidos,
+                    field TotalActualizados, field TotalSinCambios, field TotalNoEncontrados,
+                    field TotalRechazados, field TotalErrorTecnico, field TotalPendienteConfig,
+                    field TotalOmitidos, field AlicuotasPend,
+                    field CantErrores, field ErroresCriticality, field ErroresEstado;
+    action Ejecutar affects entity _Log, entity _Errores, field EstadoEjecucion, field TotalLeidos,
+                    field TotalActualizados, field TotalSinCambios, field TotalNoEncontrados,
+                    field TotalRechazados, field TotalErrorTecnico, field TotalPendienteConfig,
+                    field TotalOmitidos, field AlicuotasPend,
+                    field CantErrores, field ErroresCriticality, field ErroresEstado;
+    action ExportarCambios affects field ExportContent, field ExportMime, field ExportFilename;
+    action AplicarExenciones affects entity _Log, entity _Errores, field CantErrores, field ErroresCriticality, field ErroresEstado;
+    field Provincia affects field IndicadorFueraPadron, field HideTuc, field TipoIndFuera,
+                    field HideSal, field IndicadorFueraPadronNoSal,
+                    permissions ( field ActualizarSoloPadron, field IndicadorFueraPadron, field TipoRetFueraPadron,
+                                  field IndicadorExentoCM, field IndicadorCmCoef0, field SoloConRetencion );
+    // Al cambiar el tipo de padron o el de fuera de padron, refrescar el filtro del matchcode del indicador
+    field TipoRetencion affects field TipoIndFuera;
+    field TipoRetFueraPadron affects field TipoIndFuera, field IndicadorFueraPadron;
+    // Al cambiar el Modo (A/C), refrescar que parametros de Tucuman quedan editables (get_instance_features)
+    // y limpiar los que quedan grisados (determinacion limpiarPorModo)
+    field ModoArchivo affects field IndicadorFueraPadron, field TipoRetFueraPadron, field IndicadorExentoCM,
+                              field IndicadorCmCoef0, field TipoIndFuera, field ActualizarSoloPadron,
+                              permissions ( field ActualizarSoloPadron, field IndicadorFueraPadron, field TipoRetFueraPadron,
+                                            field IndicadorExentoCM, field IndicadorCmCoef0 );
+  }
+
+  mapping for zarba_ret_ejec
+  {
+    EjecucionUUID          = ejecucion_uuid;
+    IdEjecucion            = id_ejecucion;
+    Sociedad               = sociedad;
+    TipoRetencion          = tipo_retencion;
+    Provincia              = provincia;
+    NombreArchivo          = nombre_archivo;
+    TamanioArchivo         = tamanio_archivo;
+    Archivo                = archivo;
+    MimeType               = mime_type;
+    ModoSimulacion         = modo_simulacion;
+    ActualizarSoloPadron   = actualizar_solo_padron;
+    IndicadorFueraPadron   = indicador_fuera_padron;
+    ProvinciaAplicada      = provincia_aplicada;
+    ProvDesde              = prov_desde;
+    ProvHasta              = prov_hasta;
+    SoloConRetencion       = solo_con_retencion;
+    ModoArchivo            = modo_archivo;
+    TipoRetFueraPadron     = tipo_ret_fuera;
+    IndicadorExentoCM      = indicador_exento_cm;
+    IndicadorCmCoef0       = indicador_cm_coef0;
+    HideTuc                = hide_tuc;
+    HideCmCoef0            = hide_cm_coef0;
+    TipoIndFuera           = tipo_ind_fuera;
+    IndicadorFueraPadronNoSal = ind_fuera_no_sal;
+    HideSal                = hide_sal;
+    Usuario                = usuario;
+    FechaHora              = fecha_hora;
+    EstadoEjecucion        = estado_ejecucion;
+    TotalLeidos            = total_leidos;
+    TotalActualizados      = total_actualizados;
+    TotalSinCambios        = total_sin_cambios;
+    TotalNoEncontrados     = total_no_encontrados;
+    TotalRechazados        = total_rechazados;
+    TotalErrorTecnico      = total_error_tecnico;
+    TotalPendienteConfig   = total_pendiente_config;
+    TotalOmitidos          = total_omitidos;
+    AlicuotasPend          = alicuotas_pend;
+    JobPartidas            = job_partidas;
+    ExportContent          = export_content;
+    ExportMime             = export_mime;
+    ExportFilename         = export_filename;
+    LastChangedAt          = last_changed_at;
+    LocalLastChangedAt     = local_last_changed_at;
+  }
+}
+
+define behavior for ZI_ARBA_RET_EJEC_LOG alias Log
+persistent table zarba_ret_log
+draft table zarba_ret_log_d
+lock dependent by _Ejecucion
+authorization dependent by _Ejecucion
+etag master LastChangedAt
+{
+  update;
+  delete;
+  field ( numbering : managed, readonly ) LogUUID;
+  field ( readonly ) EjecucionUUID;
+  association _Ejecucion;
+
+  mapping for zarba_ret_log
+  {
+    EjecucionUUID      = ejecucion_uuid;
+    LogUUID            = log_uuid;
+    NroLinea           = nro_linea;
+    Cuit               = cuit;
+    Proveedor          = proveedor;
+    Caso               = caso;
+    IndicadorAnterior  = indicador_anterior;
+    IndicadorNuevo     = indicador_nuevo;
+    AlicuotaAnterior   = alicuota_anterior;
+    AlicuotaNueva      = alicuota_nueva;
+    SujetoRetAnterior  = sujeto_ret_anterior;
+    SujetoRetNuevo     = sujeto_ret_nuevo;
+    Estado             = estado;
+    Mensaje            = mensaje;
+    EstadoTecnico      = estado_tecnico;
+    TipoContribuyente  = tipo_contribuyente;
+    MarcaAltaBaja      = marca_alta_baja;
+    MarcaCambioAlic    = marca_cambio_alic;
+    NroGrupo           = nro_grupo;
+    FechaPublicacion   = fecha_publicacion;
+    VigenciaDesde      = vigencia_desde;
+    VigenciaHasta      = vigencia_hasta;
+    LastChangedAt      = last_changed_at;
+  }
+}

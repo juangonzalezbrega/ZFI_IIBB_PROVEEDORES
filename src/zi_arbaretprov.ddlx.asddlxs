@@ -1,0 +1,37 @@
+@Metadata.layer: #CUSTOMER
+@UI: {
+  headerInfo: {
+    typeName: 'Padrón por provincia', 
+    typeNamePlural: 'Padrón por provincia', 
+    title: {
+      type: #STANDARD, 
+      value: 'Provincia'
+    }
+  }
+}
+annotate view ZI_ArbaRetProv with
+{
+  @UI.identification: [ {
+    position: 1 
+  } ]
+  @UI.lineItem: [ {
+    position: 1 
+  } ]
+  @UI.facet: [ {
+    id: 'PadronProvincia', 
+    purpose: #STANDARD, 
+    type: #IDENTIFICATION_REFERENCE, 
+    label: 'Padrón por provincia', 
+    position: 1 
+  } ]
+  Provincia;
+  
+  @EndUserText.label: 'Activa'
+  @UI.identification: [ {
+    position: 2 
+  } ]
+  @UI.lineItem: [ {
+    position: 2 
+  } ]
+  Activa;
+}

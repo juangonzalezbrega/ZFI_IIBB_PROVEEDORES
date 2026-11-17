@@ -1,0 +1,5 @@
+@ObjectModel.leadingEntity.name: 'ZI_ArbaRetProv_S'
+define service ZUI_ARBA_RET_PROV {
+  expose ZI_ARBARETPROV_S as PadronProvinciaAll;
+  expose ZI_ARBARETPROV as PadronProvincia;
+}

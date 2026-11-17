@@ -1,0 +1,146 @@
+@Metadata.layer: #CORE
+
+@UI: {
+  headerInfo: {
+    typeName:       'Registro de Log',
+    typeNamePlural: 'Registros de Log',
+    title:       { type: #STANDARD, value: 'Cuit' },
+    description: { type: #STANDARD, value: 'Estado' }
+  }
+}
+
+annotate entity ZC_ARBA_RET_EJEC_LOG with
+{
+  @UI.facet: [
+    { id: 'datos', purpose: #STANDARD, type: #IDENTIFICATION_REFERENCE,
+      label: 'Detalle del Registro', position: 10 }
+  ]
+
+  @UI.hidden: true
+  EjecucionUUID;
+
+  @UI.hidden: true
+  LogUUID;
+
+  @EndUserText.label: 'Nº Línea'
+  @UI: {
+    lineItem:       [{ position: 10 }],
+    identification: [{ position: 10 }]
+  }
+  NroLinea;
+
+  @EndUserText.label: 'CUIT'
+  @UI: {
+    lineItem:       [{ position: 20, importance: #HIGH }],
+    identification: [{ position: 20 }]
+  }
+  @Search.defaultSearchElement: true
+  Cuit;
+
+  @EndUserText.label: 'Proveedor'
+  @UI: {
+    lineItem:       [{ position: 30, importance: #HIGH }],
+    identification: [{ position: 30 }]
+  }
+  @Search.defaultSearchElement: true
+  Proveedor;
+
+  @EndUserText.label: 'Caso'
+  @UI: {
+    lineItem:       [{ position: 40 }],
+    identification: [{ position: 40 }]
+  }
+  Caso;
+
+  @EndUserText.label: 'Tipo Ret.'
+  @UI: {
+    lineItem:       [{ position: 45 }],
+    identification: [{ position: 45 }]
+  }
+  TipoRet;
+
+  @EndUserText.label: 'Estado'
+  @UI: {
+    lineItem:       [{ position: 50, importance: #HIGH, criticality: 'EstadoCriticality' }],
+    identification: [{ position: 50, criticality: 'EstadoCriticality' }]
+  }
+  Estado;
+
+  @EndUserText.label: 'Mensaje'
+  @UI: {
+    lineItem:       [{ position: 60, importance: #HIGH }],
+    identification: [{ position: 60 }]
+  }
+  Mensaje;
+
+  @EndUserText.label: 'Indicador Anterior'
+  @UI: {
+    lineItem:       [{ position: 70 }],
+    identification: [{ position: 70 }]
+  }
+  IndicadorAnterior;
+
+  @EndUserText.label: 'Indicador Nuevo'
+  @UI: {
+    lineItem:       [{ position: 80 }],
+    identification: [{ position: 80 }]
+  }
+  IndicadorNuevo;
+
+  @EndUserText.label: 'Alícuota Anterior'
+  @UI.identification: [{ position: 90 }]
+  AlicuotaAnterior;
+
+  @EndUserText.label: 'Alícuota Nueva'
+  @UI: {
+    lineItem:       [{ position: 90 }],
+    identification: [{ position: 100 }]
+  }
+  AlicuotaNueva;
+
+  @EndUserText.label: 'Sujeto Ret. Anterior'
+  @UI.identification: [{ position: 110 }]
+  SujetoRetAnterior;
+
+  @EndUserText.label: 'Sujeto Ret. Nuevo'
+  @UI.identification: [{ position: 120 }]
+  SujetoRetNuevo;
+
+  @EndUserText.label: 'Estado Técnico'
+  @UI.identification: [{ position: 130 }]
+  EstadoTecnico;
+
+  @EndUserText.label: 'Tipo Contribuyente'
+  @UI.identification: [{ position: 140 }]
+  TipoContribuyente;
+
+  @EndUserText.label: 'Marca Alta/Baja'
+  @UI.identification: [{ position: 150 }]
+  MarcaAltaBaja;
+
+  @EndUserText.label: 'Marca Cambio Alícuota'
+  @UI.identification: [{ position: 160 }]
+  MarcaCambioAlic;
+
+  @EndUserText.label: 'Nº Grupo'
+  @UI.identification: [{ position: 170 }]
+  NroGrupo;
+
+  @EndUserText.label: 'Fecha Publicación'
+  @UI.identification: [{ position: 180 }]
+  FechaPublicacion;
+
+  @EndUserText.label: 'Vigencia Desde'
+  @UI.identification: [{ position: 190 }]
+  VigenciaDesde;
+
+  @EndUserText.label: 'Vigencia Hasta'
+  @UI.identification: [{ position: 200 }]
+  VigenciaHasta;
+
+  @UI.hidden: true
+  LastChangedAt;
+
+  @UI.hidden: true
+  EstadoCriticality;
+}

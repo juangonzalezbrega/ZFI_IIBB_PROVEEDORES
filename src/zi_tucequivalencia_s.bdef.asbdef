@@ -1,0 +1,74 @@
+managed with additional save implementation in class ZBP_I_TUCEQUIVALENCIA_S unique;
+strict ( 2 );
+with draft;
+define behavior for ZI_TucEquivalencia_S alias TucumanEquivalenAll
+draft table ZARBA_TUC_A_D_S
+with unmanaged save
+lock master total etag LastChangedAtMax
+authorization master( global )
+{
+  field ( readonly )
+   SingletonID;
+
+  field ( notrigger )
+   SingletonID,
+   LastChangedAtMax;
+
+
+  update;
+  internal create;
+  internal delete;
+
+  draft action ( features : instance ) Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare {
+    validation TucEquivalencia ~ ValidateDataConsistency;
+  }
+
+  association _TucEquivalencia { create ( features : instance ); with draft; }
+
+}
+
+define behavior for ZI_TucEquivalencia alias TucEquivalencia ##UNMAPPED_FIELD[SingletonID]
+persistent table ZARBA_TUC_ALIC
+draft table ZARBA_TUC_ALI_D
+lock dependent by _TucumanEquivalenAll
+authorization dependent by _TucumanEquivalenAll
+{
+  field ( mandatory : create )
+   Witht,
+   WtWithcd;
+
+  field ( readonly )
+   SingletonID;
+
+  field ( readonly : update )
+   Witht,
+   WtWithcd;
+
+  field ( notrigger )
+   SingletonID;
+
+
+  update( features : global );
+  delete( features : global );
+
+  mapping for ZARBA_TUC_ALIC
+  {
+    Witht = WITHT;
+    WtWithcd = WT_WITHCD;
+    ConvMult = CONV_MULT;
+    WtQsatz = WT_QSATZ;
+  }
+
+  association _TucumanEquivalenAll { with draft; }
+
+  validation ValidateDataConsistency on save
+  {
+    create;
+    update;
+  }
+
+}

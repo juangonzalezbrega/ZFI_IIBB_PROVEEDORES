@@ -1,0 +1,34 @@
+{
+  "formatVersion": "2",
+  "header": {
+    "description": "Padrón Retenciones IIBB",
+    "originalLanguage": "es",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "appType": "ui5",
+    "catalogId": "SAP_TC_UI5_REPO_UIAD",
+    "targetMappingTitle": "Padrón Retenciones IIBB"
+  },
+  "ui5AppDetails": {
+    "appId": "zretencioniibb"
+  },
+  "navigation": {
+    "targetMappingId": "ZRET_IIBB_UI_UI5R_TM",
+    "semanticObject": "ZRetencionIIBB",
+    "action": "manage",
+    "desktop": true,
+    "tablet": true,
+    "phone": true
+  },
+  "tiles": [
+    {
+      "id": "ZRET_IIBB_UI_UI5R_AL",
+      "tileType": "static",
+      "isDefault": true,
+      "standard": {
+        "title": "Padrón Retenciones IIBB"
+      }
+    }
+  ]
+}

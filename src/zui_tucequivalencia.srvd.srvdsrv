@@ -1,0 +1,5 @@
+@ObjectModel.leadingEntity.name: 'ZI_TucEquivalencia_S'
+define service ZUI_TUCEQUIVALENCIA {
+  expose ZI_TUCEQUIVALENCIA_S as TucumanEquivalenAll;
+  expose ZI_TUCEQUIVALENCIA as TucEquivalencia;
+}

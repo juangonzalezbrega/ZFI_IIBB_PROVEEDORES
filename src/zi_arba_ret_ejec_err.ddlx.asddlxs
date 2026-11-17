@@ -1,0 +1,35 @@
+@Metadata.layer: #CORE
+@UI: {
+  headerInfo: { typeName: 'Error', typeNamePlural: 'Errores',
+                title: { type: #STANDARD, value: 'MensajeClave' } },
+  presentationVariant: [{ sortOrder: [{ by: 'Categoria', direction: #ASC }, { by: 'ProveedorClave', direction: #ASC }],
+                          visualizations: [{ type: #AS_LINEITEM }] }]
+}
+annotate entity ZI_ARBA_RET_EJEC_ERR with
+{
+  @UI.hidden: true
+  EjecucionUUID;
+
+  @UI.hidden: true
+  Categoria;
+
+  @EndUserText.label: 'Tipo'
+  @UI.lineItem: [{ position: 10, importance: #HIGH }]
+  CategoriaTexto;
+
+  @EndUserText.label: 'Error'
+  @UI.lineItem: [{ position: 20, importance: #HIGH, cssDefault.width: '45rem' }]
+  MensajeClave;
+
+  @EndUserText.label: 'Proveedor'
+  @UI.lineItem: [{ position: 30, importance: #HIGH }]
+  ProveedorClave;
+
+  @EndUserText.label: 'Registros'
+  @UI.lineItem: [{ position: 40, importance: #MEDIUM }]
+  Cantidad;
+
+  @EndUserText.label: 'CUIT (ejemplo)'
+  @UI.lineItem: [{ position: 50, importance: #LOW }]
+  CuitEjemplo;
+}

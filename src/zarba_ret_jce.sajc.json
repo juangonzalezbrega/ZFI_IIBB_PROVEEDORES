@@ -1,0 +1,19 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "ARBA Retenciones - procesamiento del padron",
+    "originalLanguage": "es",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "className": "ZCL_ARBA_RET_JOB"
+  },
+  "parameters": [
+    {
+      "name": "ID_EJEC"
+    },
+    {
+      "name": "SIMULAR"
+    }
+  ]
+}

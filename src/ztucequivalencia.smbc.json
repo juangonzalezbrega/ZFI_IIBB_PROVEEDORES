@@ -1,0 +1,40 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "Actualizar Tucuman - Equivalencia alicuota / codig",
+    "originalLanguage": "es",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "serviceConfiguration": {
+    "serviceBinding": "ZUI_TUCEQUIVALENCIA_O4",
+    "serviceName": "ZUI_TUCEQUIVALENCIA_O4",
+    "serviceVersion": "0001",
+    "rootEntitySet": "TucumanEquivalenAll",
+    "name": "Tucuman - Equivalencia alicuota / codigo",
+    "transportObject": "ZTUCEQUIVALENCIAT",
+    "configurationGroup": "",
+    "skipRootEntity": true
+  },
+  "appConfiguration": {
+    "listReport": {},
+    "objectPages": [
+      {
+        "entitySet": "TucumanEquivalenAll",
+        "variantManagement": "control"
+      }
+    ],
+    "tableSettings": [
+      {
+        "entitySet": "TucEquivalencia",
+        "tableType": "gridTable",
+        "selectAll": true,
+        "rowCountMode": "auto",
+        "frozenColumnCount": 2,
+        "creationModeName": "inlineCreationRows",
+        "createAtEnd": true,
+        "condensedTableLayout": true,
+        "widthIncludingColumnHeader": true
+      }
+    ]
+  }
+}

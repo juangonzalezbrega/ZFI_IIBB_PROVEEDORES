@@ -1,0 +1,313 @@
+@Metadata.layer: #CORE
+
+@UI: {
+  headerInfo: {
+    typeName:       'Ejecución',
+    typeNamePlural: 'Ejecuciones',
+    title:       { type: #STANDARD, value: 'IdEjecucion' },
+    description: { type: #STANDARD, value: 'NombreArchivo' }
+  },
+  presentationVariant: [{
+    sortOrder:      [{ by: 'FechaHora', direction: #DESC }],
+    visualizations: [{ type: #AS_LINEITEM }]
+  }]
+}
+
+annotate entity ZC_ARBA_RET_EJECUCION with
+{
+  @UI.facet: [
+    // Cabecera del Object Page: KPIs
+    { id: 'kpiLeidos', purpose: #HEADER, type: #DATAPOINT_REFERENCE,
+      position: 10, targetQualifier: 'TotalLeidos' },
+    { id: 'kpiActual', purpose: #HEADER, type: #DATAPOINT_REFERENCE,
+      position: 20, targetQualifier: 'TotalActualizados' },
+    { id: 'kpiPend',   purpose: #HEADER, type: #DATAPOINT_REFERENCE,
+      position: 30, targetQualifier: 'TotalPendienteConfig' },
+    { id: 'kpiError',  purpose: #HEADER, type: #DATAPOINT_REFERENCE,
+      position: 40, targetQualifier: 'TotalErrorTecnico' },
+    // Semaforo de errores (verde / rojo) en la cabecera
+    { id: 'kpiErrores', purpose: #HEADER, type: #DATAPOINT_REFERENCE,
+      position: 50, targetQualifier: 'ErroresEstado' },
+    // Cuerpo del Object Page
+    { id: 'params',  purpose: #STANDARD, type: #FIELDGROUP_REFERENCE,
+      label: 'Parámetros de Ejecución', position: 10, targetQualifier: 'Parametros' },
+    { id: 'resumen', purpose: #STANDARD, type: #FIELDGROUP_REFERENCE,
+      label: 'Resumen', position: 20, targetQualifier: 'Resumen' },
+    // Solapa "Errores" (Redmine 33756): semaforo + cada error una sola vez (bloqueo / no ampliado: por proveedor)
+    { id: 'errores', purpose: #STANDARD, type: #COLLECTION,
+      label: 'Errores', position: 25 },
+    { id: 'erroresSem', parentId: 'errores', purpose: #STANDARD, type: #FIELDGROUP_REFERENCE,
+      label: 'Estado', position: 10, targetQualifier: 'Errores' },
+    { id: 'erroresTab', parentId: 'errores', purpose: #STANDARD, type: #LINEITEM_REFERENCE,
+      label: 'Detalle de errores', position: 20, targetElement: '_Errores' },
+    { id: 'log',     purpose: #STANDARD, type: #LINEITEM_REFERENCE,
+      label: 'Log de Auditoría', position: 30, targetElement: '_Log' }
+  ]
+
+  @UI.hidden: true
+  EjecucionUUID;
+
+  @EndUserText.label: 'ID Ejecución'
+  @UI: {
+    lineItem:   [{ position: 10, importance: #HIGH }],
+    fieldGroup: [{ qualifier: 'Resumen', position: 10 }]
+  }
+  @Search.defaultSearchElement: true
+  IdEjecucion;
+
+  @EndUserText.label: 'Provincia'
+  @UI: {
+    lineItem:       [{ position: 15 }],
+    selectionField: [{ position: 5 }],
+    fieldGroup:     [{ qualifier: 'Parametros', position: 5 }]
+  }
+  Provincia;
+
+  @EndUserText.label: 'Sociedad'
+  // Boton que abre la app estandar "Update Withholding Tax Codes and Open Items"
+  // (intent ReceivablesPayablesReport-updateTaxCodeARRgn, tech GUI). SOLO navega: no pasa datos
+  // (requiresContext: false, sin semanticObjectBinding). Va en la tabla (lineItem) y en la cabecera
+  // del Object Page (identification, junto a "Exportar Cambios").
+  // NOTA: la version que ROMPIA el FooterContent del OP tenia requiresContext:true + semanticObjectBinding;
+  // esta version PLANA no evalua footer-visibility por contexto, por eso deberia cargar OK. Si la vista de
+  // ejecucion vuelve a no cargar (getFooterVisibilityExpression / getAppComponent), quitar el entry de
+  // 'identification' (dejarlo solo en lineItem).
+  @Consumption.semanticObject: 'ReceivablesPayablesReport'
+  @UI: {
+    lineItem:       [{ position: 20, importance: #HIGH },
+                     { type: #FOR_INTENT_BASED_NAVIGATION, semanticObjectAction: 'updateTaxCodeARRgn',
+                       label: 'Actualizar Códigos y Partidas', requiresContext: false }],
+    selectionField: [{ position: 10 }],
+    fieldGroup:     [{ qualifier: 'Parametros', position: 10 }],
+    identification: [{ type: #FOR_INTENT_BASED_NAVIGATION, semanticObjectAction: 'updateTaxCodeARRgn',
+                       label: 'Actualizar Códigos y Partidas', requiresContext: false }]
+  }
+  Sociedad;
+
+  @EndUserText.label: 'Tipo de Retención'
+  @UI: {
+    lineItem:       [{ position: 30 }],
+    selectionField: [{ position: 20 }],
+    fieldGroup:     [{ qualifier: 'Parametros', position: 20 }]
+  }
+  TipoRetencion;
+
+  // Nombre: lo llena el stream al subir; se muestra en la lista y como título,
+  // pero no como campo editable del formulario (el control de subida ya lo muestra).
+  @EndUserText.label: 'Nombre de Archivo'
+  @UI: {
+    lineItem: [{ position: 40, importance: #HIGH }]
+  }
+  @Search.defaultSearchElement: true
+  NombreArchivo;
+
+  // Tamaño: calculado por la acción; oculto de la interfaz (a pedido).
+  @UI.hidden: true
+  TamanioArchivo;
+
+  // FE no permite cambiar la etiqueta dinamicamente segun la provincia -> se indican ambos formatos.
+  @EndUserText.label: 'Archivo del Padrón (.txt o .csv)'
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 50 }]
+  Archivo;
+
+  @UI.hidden: true
+  MimeType;
+
+  // Informativo (lo escribe el proceso): si la ULTIMA corrida fue una simulacion. Simular y Ejecutar son
+  // acciones independientes; este dato no decide nada.
+  @EndUserText.label: 'Última corrida en simulación'
+  @UI: {
+    lineItem:       [{ position: 50 }],
+    selectionField: [{ position: 30 }],
+    fieldGroup:     [{ qualifier: 'Resumen', position: 45 }]
+  }
+  ModoSimulacion;
+
+  @EndUserText.label: 'Actualizar Sólo Padrón'
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 70 }]
+  ActualizarSoloPadron;
+
+  @EndUserText.label: 'Indicador Fuera de Padrón'
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 80 }]
+  IndicadorFueraPadron;
+
+  // Salta: indicador para los proveedores fuera de padron de otra region (visible solo con Provincia = 'SAL')
+  @EndUserText.label: 'Indicador Fuera de Padrón No Salta'
+  @UI.hidden: #(HideSal)
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 85 }]
+  IndicadorFueraPadronNoSal;
+
+  @EndUserText.label: 'Proveedor Desde'
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 90 }]
+  ProvDesde;
+
+  @EndUserText.label: 'Proveedor Hasta'
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 100 }]
+  ProvHasta;
+
+  @EndUserText.label: 'Sólo con Retención Existente'
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 110 }]
+  SoloConRetencion;
+
+  // Parámetros específicos de Tucumán: visibles sólo cuando Provincia = 'TUC' (via @UI.hidden: #(HideTuc))
+  // Modo (72) y Tipo Ret. Fuera de Padrón (75) van antes del Indicador (80) para que Tipo e Indicador
+  // queden uno debajo del otro en el formulario (Redmine 33748, nota #45).
+  @EndUserText.label: 'Modo (Tucumán)'
+  @UI.hidden: #(HideTuc)
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 72 }]
+  ModoArchivo;
+
+  @EndUserText.label: 'Tipo Ret. Fuera de Padrón (Tucumán)'
+  @UI.hidden: #(HideTuc)
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 75 }]
+  TipoRetFueraPadron;
+
+  @EndUserText.label: 'Ind. Ret. Exento CM (Tucumán)'
+  @UI.hidden: #(HideTuc)
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 116 }]
+  IndicadorExentoCM;
+
+  // Visible en Tucumán; editable sólo con Modo C (Coeficientes), grisado con Modo A
+  // (feature control dinámico, get_instance_features).
+  @EndUserText.label: 'Indicador CM Coef. 0 (Tucumán)'
+  @UI.hidden: #(HideTuc)
+  @UI.fieldGroup: [{ qualifier: 'Parametros', position: 118 }]
+  IndicadorCmCoef0;
+
+  @EndUserText.label: 'Usuario'
+  @UI: {
+    lineItem:   [{ position: 90, importance: #LOW }],
+    fieldGroup: [{ qualifier: 'Resumen', position: 20 }]
+  }
+  Usuario;
+
+  @EndUserText.label: 'Fecha y Hora'
+  @UI: {
+    lineItem:       [{ position: 100 }],
+    selectionField: [{ position: 40 }],
+    fieldGroup:     [{ qualifier: 'Resumen', position: 30 }]
+  }
+  FechaHora;
+
+  @EndUserText.label: 'Estado'
+  @UI: {
+    lineItem:       [{ position: 60, importance: #HIGH, criticality: 'EstadoEjecucionCriticality' },
+                     { type: #FOR_ACTION, dataAction: 'Simular',  label: 'Simular' },
+                     { type: #FOR_ACTION, dataAction: 'Ejecutar', label: 'Ejecutar' },
+                     { type: #FOR_ACTION, dataAction: 'ExportarCambios', label: 'Exportar Cambios' },
+                     { type: #FOR_ACTION, dataAction: 'AplicarExenciones', label: 'Aplicar Exenciones' }],
+    selectionField: [{ position: 50 }],
+    fieldGroup:     [{ qualifier: 'Resumen', position: 40, criticality: 'EstadoEjecucionCriticality' }],
+    identification: [{ type: #FOR_ACTION, dataAction: 'Simular',  label: 'Simular' },
+                     { type: #FOR_ACTION, dataAction: 'Ejecutar', label: 'Ejecutar' },
+                     { type: #FOR_ACTION, dataAction: 'ExportarCambios', label: 'Exportar Cambios' },
+                     { type: #FOR_ACTION, dataAction: 'AplicarExenciones', label: 'Aplicar Exenciones' }]
+  }
+  EstadoEjecucion;
+
+  @EndUserText.label: 'Total Leídos'
+  @UI: {
+    fieldGroup: [{ qualifier: 'Resumen', position: 50 }],
+    dataPoint:  { title: 'Total Leídos' }
+  }
+  TotalLeidos;
+
+  @EndUserText.label: 'Actualizados'
+  @UI: {
+    lineItem:   [{ position: 70 }],
+    fieldGroup: [{ qualifier: 'Resumen', position: 60 }],
+    dataPoint:  { title: 'Actualizados' }
+  }
+  TotalActualizados;
+
+  @EndUserText.label: 'Sin Cambios'
+  @UI.fieldGroup: [{ qualifier: 'Resumen', position: 70 }]
+  TotalSinCambios;
+
+  @EndUserText.label: 'No Encontrados'
+  @UI.fieldGroup: [{ qualifier: 'Resumen', position: 80 }]
+  TotalNoEncontrados;
+
+  @EndUserText.label: 'Rechazados'
+  @UI: {
+    lineItem:   [{ position: 80 }],
+    fieldGroup: [{ qualifier: 'Resumen', position: 90 }]
+  }
+  TotalRechazados;
+
+  @EndUserText.label: 'Error Técnico'
+  @UI: {
+    fieldGroup: [{ qualifier: 'Resumen', position: 100 }],
+    dataPoint:  { title: 'Error Técnico' }
+  }
+  TotalErrorTecnico;
+
+  @EndUserText.label: 'Pendiente Configuración'
+  @UI: {
+    fieldGroup: [{ qualifier: 'Resumen', position: 110 }],
+    dataPoint:  { title: 'Pendiente Configuración' }
+  }
+  TotalPendienteConfig;
+
+  // Detalle de "Pendiente Configuracion": que alicuotas del archivo no tienen indicador (y cuantos proveedores).
+  @EndUserText.label: 'Alícuotas sin Indicador'
+  @UI.fieldGroup: [{ qualifier: 'Resumen', position: 115 }]
+  AlicuotasPend;
+
+  @EndUserText.label: 'Omitidos'
+  @UI.fieldGroup: [{ qualifier: 'Resumen', position: 120 }]
+  TotalOmitidos;
+
+  @EndUserText.label: 'Job Ajuste Partidas'
+  @UI.fieldGroup: [{ qualifier: 'Resumen', position: 130 }]
+  JobPartidas;
+
+  // Descarga del .zip generado por la accion ExportarCambios (largeObject readonly -> link de descarga).
+  @EndUserText.label: 'Descarga de Cambios (.zip)'
+  @UI.fieldGroup: [{ qualifier: 'Resumen', position: 140 }]
+  ExportContent;
+
+  @UI.hidden: true
+  ExportMime;
+
+  @UI.hidden: true
+  ExportFilename;
+
+  @UI.hidden: true
+  LastChangedAt;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+
+  @UI.hidden: true
+  EstadoEjecucionCriticality;
+
+  @UI.hidden: true
+  HideTuc;
+
+  @UI.hidden: true
+  HideSal;
+
+  @UI.hidden: true
+  HideCmCoef0;
+
+  @UI.hidden: true
+  TipoIndFuera;
+
+  // Semaforo de la solapa "Errores" (cabecera + solapa). Rojo = hay errores; verde = sin errores.
+  @EndUserText.label: 'Errores'
+  @UI: {
+    lineItem:   [{ position: 65, criticality: 'ErroresCriticality', criticalityRepresentation: #WITH_ICON }],
+    fieldGroup: [{ qualifier: 'Errores', position: 10, criticality: 'ErroresCriticality', criticalityRepresentation: #WITH_ICON }],
+    dataPoint:  { qualifier: 'ErroresEstado', title: 'Errores', criticality: 'ErroresCriticality', criticalityRepresentation: #WITH_ICON }
+  }
+  ErroresEstado;
+
+  @EndUserText.label: 'Errores distintos'
+  @UI.fieldGroup: [{ qualifier: 'Errores', position: 20 }]
+  CantErrores;
+
+  @UI.hidden: true
+  ErroresCriticality;
+}
+
